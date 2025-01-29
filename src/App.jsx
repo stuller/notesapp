@@ -10,11 +10,12 @@ import {
   Image,
   Grid,
   Divider,
+  useAuthenticator
 } from "@aws-amplify/ui-react";
+
 import { Amplify } from "aws-amplify";
 import "@aws-amplify/ui-react/styles.css";
-import { getUrl } from "aws-amplify/storage";
-import { uploadData } from "aws-amplify/storage";
+import { getUrl, uploadData } from "aws-amplify/storage";
 import { generateClient } from "aws-amplify/data";
 import outputs from "../amplify_outputs.json";
 /**
@@ -27,11 +28,12 @@ const client = generateClient({
 });
 
 export default function App() {
+  const { user, signOut } = useAuthenticator((context) => [context.user]);
   const [notes, setNotes] = useState([]);
 
   useEffect(() => {
     fetchNotes();
-  }, []);
+  }, [user]);
 
   async function fetchNotes() {
     const { data: notes } = await client.models.Note.list();
@@ -88,9 +90,14 @@ export default function App() {
     fetchNotes();
   }
 
+  const handleSignOut = async () => {
+    console.log('signing out!')
+    setNotes([]);
+    signOut();
+  }
+
   return (
-    <Authenticator>
-      {({ signOut }) => (
+    <Authenticator onSignOut={handleSignOut}>
         <Flex
           className="App"
           justifyContent="center"
@@ -177,9 +184,8 @@ export default function App() {
               </Flex>
             ))}
           </Grid>
-          <Button onClick={signOut}>Sign Out</Button>
+          <Button onClick={handleSignOut}>Sign Out</Button>
         </Flex>
-      )}
     </Authenticator>
   );
 }
